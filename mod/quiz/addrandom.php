@@ -63,7 +63,7 @@ if ($scrollpos) {
     $returnurl->param('scrollpos', $scrollpos);
 }
 
-$defaultcategoryobj = question_make_default_categories($contexts->all());
+$defaultcategoryobj = question_make_default_categories([$contexts->lowest()]);
 $defaultcategory = $defaultcategoryobj->id . ',' . $defaultcategoryobj->contextid;
 
 $qcobject = new question_category_object(

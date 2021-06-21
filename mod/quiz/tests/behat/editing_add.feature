@@ -15,8 +15,9 @@ Feature: Edit quiz page - adding things
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
     And the following "activities" exist:
-      | activity   | name   | intro                           | course | idnumber |
-      | quiz       | Quiz 1 | Quiz 1 for testing the Add menu | C1     | quiz1    |
+      | activity   | name             | intro                           | course | idnumber |
+      | quiz       | Quiz 1           | Quiz 1 for testing the Add menu | C1     | quiz1    |
+      | qbank      | Test qbank name  | Test qbank description          | C1     | qbank1   |
     And I am on the "Quiz 1" "mod_quiz > Edit" page logged in as "teacher1"
 
   @javascript
@@ -104,7 +105,22 @@ Feature: Edit quiz page - adding things
       | Course       | C1        | Default for C1   | Subcat 1       |
       | Course       | C1        | Default for C1   | Subcat 2       |
     When I am on "Course 1" course homepage
-    And I navigate to "Question bank" in current page administration
+    And I follow "Test qbank name"
+    And I click on "jump" "select"
+    And I click on "Categories" "option"
+    Then I should see "Add category"
+    And I follow "Add category"
+    Then I set the field "Parent category" to "Default for C1"
+    And I set the field "Name" to "Subcat 1"
+    And I set the field "Category info" to "This is sub category 1"
+    And I press "id_submitbutton"
+    And I should see "Subcat 1"
+    And I follow "Add category"
+    Then I set the field "Parent category" to "Default for C1"
+    And I set the field "Name" to "Subcat 2"
+    And I set the field "Category info" to "This is sub category 2"
+    And I press "id_submitbutton"
+    And I should see "Subcat 2"
     And I select "Questions" from the "Question bank tertiary navigation" singleselect
     And I should see "Question bank"
     And I should see "Select a category"

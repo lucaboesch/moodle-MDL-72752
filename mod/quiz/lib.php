@@ -2393,7 +2393,7 @@ function mod_quiz_output_fragment_quiz_question_bank($args) {
     // Build the required resources. The $params are all cleaned as
     // part of this process.
     list($thispageurl, $contexts, $cmid, $cm, $quiz, $pagevars) =
-            question_build_edit_resources('editq', '/mod/quiz/edit.php', $params);
+            question_build_edit_resources('editq', '/mod/quiz/edit.php', $params, true);
 
     // Get the course object and related bits.
     $course = $DB->get_record('course', array('id' => $quiz->course), '*', MUST_EXIST);
