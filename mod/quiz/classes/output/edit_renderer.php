@@ -1052,7 +1052,6 @@ class edit_renderer extends \plugin_renderer_base {
         $qbankurlparams = [
             'cmid' => $structure->get_cmid(),
             'cat' => $slot->category . ',' . $slot->contextid,
-            'recurse' => $slot->randomrecurse,
         ];
 
         $slottags = [];
@@ -1064,14 +1063,8 @@ class edit_renderer extends \plugin_renderer_base {
             $qbankurlparams["qtagids[{$index}]"] = $slottag[0];
         }
 
-        // If this is a random question, display a link to show the questions
-        // selected from in the question bank.
-        $qbankurl = new \moodle_url('/question/edit.php', $qbankurlparams);
-        $qbanklink = ' ' . \html_writer::link($qbankurl,
-                        get_string('seequestions', 'quiz'), array('class' => 'mod_quiz_random_qbank_link'));
-
         return html_writer::link($editurl, $icon . $editicon, array('title' => $configuretitle)) .
-                ' ' . $instancename . ' ' . $qbanklink;
+                ' ' . $instancename;
     }
 
     /**

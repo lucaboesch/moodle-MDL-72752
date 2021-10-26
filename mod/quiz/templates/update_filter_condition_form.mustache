@@ -15,26 +15,20 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_quiz/random_question_form_preview
+    @template mod_quiz/update_filter_condition_form
 
-    A preview section for the list of questions that match the random
-    question criteria in the random question form.
-
-    Classes required for JS:
-    * none
-
-    Data attributes required for JS:
-    * none
-
-    Context variables required for this template:
-    * title A cleaned string (use clean_text()) to display.
-    * body HTML content for the boday
+    From to add random questions.
 
     Example context (json):
     {}
 }}
-<div class="mt-2 position-relative" data-region="random-question-preview-container">
-    <div data-region="question-count-container"></div>
-    <div data-region="question-list-container"></div>
-    {{> core/overlay_loading}}
+<div id="update_filter_condition_form-container" data-cmid="{{cmid}}" data-id="{{id}}">
+    <!-- Question bank -->
+    {{{questionbank}}}
+
+    <!-- submit buttons -->
+    <div>
+        <input type="submit" class="btn btn-primary" name="update" value="{{#str}} updatefilterconditon, mod_quiz {{/str}}">
+        <input type="submit" class="btn btn-secondary" name="cancel" value="{{#str}} cancel {{/str}}">
+    </div>
 </div>

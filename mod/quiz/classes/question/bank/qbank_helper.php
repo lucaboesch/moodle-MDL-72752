@@ -110,6 +110,7 @@ class qbank_helper {
                        slot.maxmark,
                        slot.requireprevious,
                        qsr.filtercondition,
+                       qsr.usingcontextid,
                        qv.status,
                        qv.id AS versionid,
                        qv.version,
@@ -169,11 +170,8 @@ class qbank_helper {
 
             if ($slot->filtercondition) {
                 // Unpack the information about a random question.
-                $filtercondition = json_decode($slot->filtercondition);
                 $slot->questionid = 's' . $slot->id; // Sometimes this is used as an array key, so needs to be unique.
-                $slot->category = $filtercondition->questioncategoryid;
-                $slot->randomrecurse = (bool) $filtercondition->includingsubcategories;
-                $slot->randomtags = isset($filtercondition->tags) ? (array) $filtercondition->tags : [];
+                $slot->filtercondition = json_decode($slot->filtercondition);
                 $slot->qtype = 'random';
                 $slot->name = get_string('random', 'quiz');
                 $slot->length = 1;
@@ -205,10 +203,10 @@ class qbank_helper {
      * @return array list of tag ids.
      */
     public static function get_tag_ids_for_slot(\stdClass $slotdata): array {
+        $filters = $slotdata->filtercondition->filters;
         $tagids = [];
-        foreach ($slotdata->randomtags as $taginfo) {
-            [$id] = explode(',', $taginfo, 2);
-            $tagids[] = $id;
+        if (isset($filters->qtagids)) {
+            $tagids = $filters->qtagids->values;
         }
         return $tagids;
     }
@@ -220,10 +218,7 @@ class qbank_helper {
      * @return string that can be used to display the random slot.
      */
     public static function describe_random_question(\stdClass $slotdata): string {
-        global $DB;
-        $category = $DB->get_record('question_categories', ['id' => $slotdata->category]);
-        return \question_bank::get_qtype('random')->question_name(
-               $category, $slotdata->randomrecurse, $slotdata->randomtags);
+        return \question_bank::get_qtype('random')->question_name($slotdata);
     }
 
     /**
@@ -248,7 +243,7 @@ class qbank_helper {
         // Random question.
         $randomloader = new random_question_loader($qubaids, []);
         $newqusetionid = $randomloader->get_next_question_id($slotdata->category,
-                $slotdata->randomrecurse, self::get_tag_ids_for_slot($slotdata));
+                false, self::get_tag_ids_for_slot($slotdata));
 
         if ($newqusetionid === null) {
             throw new \moodle_exception('notenoughrandomquestions', 'quiz');
