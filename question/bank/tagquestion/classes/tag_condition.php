@@ -156,6 +156,7 @@ class tag_condition extends condition {
             'title' => get_string('tag', 'tag'),
             'custom' => false,
             'multiple' => true,
+            'conditionclass' => '\\qbank_tagquestion\\tag_condition',
             'filterclass' => null,
             'values' => $values,
             'allowempty' => true,

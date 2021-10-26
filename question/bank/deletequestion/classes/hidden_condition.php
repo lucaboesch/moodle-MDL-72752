@@ -75,6 +75,7 @@ class hidden_condition extends condition {
             'title' => get_string('showhidden', 'core_question'),
             'custom' => true,
             'multiple' => true,
+            'conditionclass' => '\\qbank_deletequestion\\hidden_condition',
             'filterclass' => 'core/local/filter/filtertypes/hidden',
             'values' => [],
             'allowempty' => true,

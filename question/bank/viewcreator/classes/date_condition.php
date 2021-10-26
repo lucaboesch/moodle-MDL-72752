@@ -108,6 +108,7 @@ class date_condition extends condition {
             'title' => 'Date',
             'custom' => true,
             'multiple' => true,
+            'conditionclass' => '\\qbank_viewcreator\\date_condition',
             'filterclass' => 'core/local/filter/filtertypes/date',
             'values' => [],
             'allowempty' => true,

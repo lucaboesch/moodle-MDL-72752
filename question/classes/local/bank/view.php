@@ -833,7 +833,8 @@ class view {
             'perpage' => $this->pagevars['qperpage'],
         ];
         echo $PAGE->get_renderer('core_question', 'bank')->render_questionbank_filter($catcontext,
-            $this->searchconditions, $additionalparams, $this->component, $this->callback, $this->course->id, $this->extraparams);
+            $this->searchconditions, $additionalparams, $this->component, $this->callback, $this->course->id,
+            $this->pagevars, $this->extraparams);
     }
 
     /**
@@ -1121,14 +1122,20 @@ class view {
      *
      * @param array $questions
      */
-    public function display_questions($questions, $page = 1, $perpage = DEFAULT_QUESTIONS_PER_PAGE): void {
+    public function display_questions($questions, $page = 0, $perpage = DEFAULT_QUESTIONS_PER_PAGE): void {
         global $OUTPUT;
+        // Pagination.
         $pageingurl = new \moodle_url($this->base_url());
         $pagingbar = new \paging_bar($this->totalcount, $page, $perpage, $pageingurl);
         $pagingbar->pagevar = 'qpage';
         echo $OUTPUT->render($pagingbar);
+
+        // Table of questions.
+        // Embeded filterconditon into the div.
+        $filtercondition = json_encode($this->get_pagevars());
+
         echo \html_writer::start_tag('div',
-            ['class' => 'categoryquestionscontainer', 'id' => 'questionscontainer']);
+            ['class' => 'question_table', 'id' => 'question_table', 'data-filtercondition' => $filtercondition]);
         $this->print_table($questions);
         echo \html_writer::end_tag('div');
         echo $OUTPUT->render($pagingbar);
