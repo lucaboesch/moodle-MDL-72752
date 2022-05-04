@@ -98,6 +98,93 @@ abstract class backup_question_dbops extends backup_dbops {
     }
 
     /**
+     * Calculates all the question_bank_entries to be included
+     * in backup, based in a given context (module).
+     */
+    public static function calculate_question_bank_entries($backupid, $contextid) {
+        global $DB;
+
+        // Check if the question bank entry already added by another activity.
+        $addedentries = $DB->get_fieldset_sql('SELECT itemid
+                                                 FROM {backup_ids_temp}
+                                                WHERE itemname = ?', ['question_bank_entry']);
+
+        // First of all, annotate all the question bank entries for the given context (module).
+        $extrasql = '';
+        $allbankentryparams = [];
+        if ($addedentries) {
+            list($allbankentrysql, $allbankentryparams) = $DB->get_in_or_equal($addedentries, SQL_PARAMS_NAMED, 'param', false);
+            $extrasql = "AND qbe.id $allbankentrysql";
+        }
+        $bankentryparam = [
+            'backupid' => $backupid,
+            'contextid' => $contextid
+        ] + $allbankentryparams;
+        $DB->execute("INSERT INTO {backup_ids_temp} (backupid, itemname, itemid)
+                               SELECT :backupid, 'question_bank_entry', qbe.id
+                                 FROM {question_bank_entries} qbe
+                                 JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
+                                WHERE qc.contextid = :contextid
+                                $extrasql", $bankentryparam);
+
+        // Now, based in the annotated questions, annotate all the question bank entries they
+        // belong to (whole context question banks too).
+        $questionbankentries = $DB->get_fieldset_sql("SELECT DISTINCT qbe.id
+                                                        FROM {question_categories} qc2
+                                                        JOIN {question_bank_entries} qbe ON qbe.questioncategoryid = qc2.id
+                                                        JOIN {question_versions} qv ON qv.questionbankentryid = qbe.id
+                                                        JOIN {question} q ON q.id = qv.questionid
+                                                        JOIN {backup_ids_temp} bi ON bi.itemid = q.id
+                                                       WHERE bi.backupid = ?
+                                                         AND bi.itemname = 'question'
+                                                         AND qc2.contextid != ?", [$backupid, $contextid]);
+
+        // Calculate and get the reference records.
+        $referebankentries = $DB->get_records_sql("
+        SELECT DISTINCT qbe.id, qc.contextid
+          FROM {question_bank_entries} qbe
+          JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
+          JOIN {question_references} qr ON qr.questionbankentryid = qbe.id
+         WHERE qr.usingcontextid = ?", [$contextid]);
+        foreach ($referebankentries as $referebankentry) {
+            if (!in_array($referebankentry->id, $questionbankentries) && (int)$referebankentry->contextid !== $contextid) {
+                $questionbankentries [] = $referebankentry->id;
+            }
+        }
+
+        // Calculate the get the set reference records.
+        $setreferebankentries = $DB->get_records_sql("
+        SELECT DISTINCT qbe.id, qc.contextid
+          FROM {question_bank_entries} qbe
+          JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
+          JOIN {question_set_references} qsr ON qsr.questionscontextid = qc.contextid
+         WHERE qsr.usingcontextid = ?", [$contextid]);
+        foreach ($setreferebankentries as $setreferebankentry) {
+            if (!in_array($setreferebankentry->id, $questionbankentries) && (int)$setreferebankentry->contextid !== $contextid) {
+                $questionbankentries [] = $setreferebankentry->id;
+            }
+        }
+
+        foreach ($questionbankentries as $key => $questionbankentry) {
+            if (in_array($questionbankentry, $addedentries)) {
+                unset($questionbankentries[$key]);
+            }
+        }
+
+        // And now, simply insert all the question bank entries (complete question bank).
+        if ($questionbankentries) {
+            list($bankentrysql, $bankentryparams) = $DB->get_in_or_equal($questionbankentries);
+            $params = array_merge([$backupid], $bankentryparams);
+            $sql = "INSERT INTO {backup_ids_temp} (backupid, itemname, itemid)
+                         SELECT ?, 'question_bank_entry', id
+                           FROM {question_bank_entries}
+                          WHERE id $bankentrysql";
+            $DB->execute($sql, $params);
+        }
+
+    }
+
+    /**
      * Delete all the annotated questions present in backup_ids_temp
      */
     public static function delete_temp_questions($backupid) {
