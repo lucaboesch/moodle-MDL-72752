@@ -65,10 +65,10 @@ class qbank_filter extends \core\output\filter {
                     $filteroptions['title'],
                     $filteroptions['custom'],
                     $filteroptions['multiple'],
-                    $filteroptions['conditionclass'],
                     $filteroptions['filterclass'],
                     $filteroptions['values'],
-                    $filteroptions['allowempty']
+                    $filteroptions['allowempty'],
+                    $filteroptions['conditionclass']
                 );
             }
         }
