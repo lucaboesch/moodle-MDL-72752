@@ -28,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/question/type/questiontypebase.php');
 
-use core_question\local\bank\condition;
 
 /**
  * The random question type.
@@ -131,12 +130,59 @@ class qtype_random extends question_type {
     /**
      * Random questions always get a question name that is Random (cateogryname).
      * This function is a centralised place to calculate that, given the category.
-     * @param stdClass $slotdata the category this question picks from. (->parent, ->name & ->contextid are used.)
+     * @param stdClass $category the category this question picks from. (->parent, ->name & ->contextid are used.)
+     * @param bool $includesubcategories whether this question also picks from subcategories.
+     * @param string[] $tagnames Name of tags this question picks from.
      * @return string the name this question should have.
      */
-    public function question_name($slotdata) {
-        $description = get_string('randomqname', 'qtype_random');
-        return shorten_text($description, 255);
+    public function question_name($category, $includesubcategories, $tagnames = []) {
+        $categoryname = '';
+        if ($category->parent && $includesubcategories) {
+            $stringid = 'randomqplusname';
+            $categoryname = shorten_text($category->name, 100);
+        } else if ($category->parent) {
+            $stringid = 'randomqname';
+            $categoryname = shorten_text($category->name, 100);
+        } else if ($includesubcategories) {
+            $context = context::instance_by_id($category->contextid);
+
+            switch ($context->contextlevel) {
+                case CONTEXT_MODULE:
+                    $stringid = 'randomqplusnamemodule';
+                    break;
+                case CONTEXT_COURSE:
+                    $stringid = 'randomqplusnamecourse';
+                    break;
+                case CONTEXT_COURSECAT:
+                    $stringid = 'randomqplusnamecoursecat';
+                    $categoryname = shorten_text($context->get_context_name(false), 100);
+                    break;
+                case CONTEXT_SYSTEM:
+                    $stringid = 'randomqplusnamesystem';
+                    break;
+                default: // Impossible.
+            }
+        } else {
+            // No question will ever be selected. So, let's warn the teacher.
+            $stringid = 'randomqnamefromtop';
+        }
+
+        if ($tagnames) {
+            $stringid .= 'tags';
+            $a = new stdClass();
+            if ($categoryname) {
+                $a->category = $categoryname;
+            }
+            $a->tags = implode(', ', array_map(function($tagname) {
+                return explode(',', $tagname)[1];
+            }, $tagnames));
+        } else {
+            $a = $categoryname ? : null;
+        }
+
+        $name = get_string($stringid, 'qtype_random', $a);
+
+        return shorten_text($name, 255);
     }
 
     protected function set_selected_question_name($question, $randomname) {

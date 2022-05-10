@@ -218,7 +218,8 @@ class qbank_helper {
      * @return string that can be used to display the random slot.
      */
     public static function describe_random_question(\stdClass $slotdata): string {
-        return \question_bank::get_qtype('random')->question_name($slotdata);
+        $description = get_string('randomqname', 'mod_quiz');
+        return shorten_text($description, 255);
     }
 
     /**
