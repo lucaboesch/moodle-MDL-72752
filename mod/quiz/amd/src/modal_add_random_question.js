@@ -54,12 +54,13 @@ function(
         ADD_RANDOM_BUTTON: 'input[type="submit"][name="addrandom"]',
         ADD_NEW_CATEGORY_BUTTON: 'input[type="submit"][name="newcategory"]',
         SUBMIT_BUTTON_ELEMENT: 'input[type="submit"][name="addrandom"], input[type="submit"][name="newcategory"]',
-        CANCEL_BUTTON_ELEMENT: 'input[type="submit"][name="cancel"]',
         FORM_HEADER: 'legend',
         SELECT_NUMBER_TO_ADD: '#menurandomcount',
         NEW_CATEGORY_ELEMENT: '#categoryname',
         PARENT_CATEGORY_ELEMENT: '#parentcategory',
         FILTER_CONDITION_ELEMENT: '[data-filtercondition]',
+        FORM_ELEMENT: '#add_random_question_form',
+        MESSAGE_INPUT: '[name="message"]',
     };
 
     /**
@@ -265,12 +266,6 @@ function(
             // page once the modal is hidden.
             FormChangeChecker.disableAllChecks();
 
-            const cancelButton = document.querySelector(SELECTORS.CANCEL_BUTTON_ELEMENT);
-            cancelButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = this.returnUrl;
-            });
-
             // Select 'menunumbertoadd' element.
             const numbertoadd = document.querySelector(SELECTORS.SELECT_NUMBER_TO_ADD);
             // Submit buttons.
@@ -305,6 +300,7 @@ function(
                     let target = e.target.closest(SELECTORS.ADD_RANDOM_BUTTON);
                     if (target) {
                         modal.addQuestions(cmid, categoryid, addonpage, randomcount, filtercondition, '', '');
+                        return;
                     }
                     // Add new category if required.
                     target = e.target.closest(SELECTORS.ADD_NEW_CATEGORY_BUTTON);
@@ -313,6 +309,7 @@ function(
                         let parentcategory = document.querySelector(SELECTORS.PARENT_CATEGORY_ELEMENT).value;
                         modal.addQuestions(cmid, categoryid, addonpage, randomcount, filtercondition,
                             newcategory, parentcategory);
+                        return;
                     }
                 });
             });
@@ -346,8 +343,11 @@ function(
             }
         };
         ajax.call([call])[0]
-            .then(() => {
-                location.reload();
+            .then((response) => {
+                const form = document.querySelector(SELECTORS.FORM_ELEMENT);
+                const messageInput = form.querySelector(SELECTORS.MESSAGE_INPUT);
+                messageInput.value = response.message;
+                form.submit();
             })
             .catch(Notification.exception);
     };

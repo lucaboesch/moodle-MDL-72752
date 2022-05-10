@@ -314,25 +314,17 @@ export const init = (filterRegionId, defaultcourseid, defaultcategoryid,
         initialFilters = loadUrlParams();
     }
 
-    // Remove the default empty filter row.
-    const emptyFilterRow = filterSet.querySelector(Selectors.filterset.regions.emptyFilterRow);
-    if (emptyFilterRow) {
-        emptyFilterRow.remove();
-    }
-
-    // Default category filter.
-    if (Object.entries(initialFilters).length == 0) {
-        initialFilters['category'] = {
-            values: [defaultcategoryid],
-            jointype: 1,
-            rangetypes: null,
-        };
-    }
-
     if (Object.entries(initialFilters).length !== 0) {
+        // Remove the default empty filter row.
+        const emptyFilterRow = filterSet.querySelector(Selectors.filterset.regions.emptyFilterRow);
+        if (emptyFilterRow) {
+            emptyFilterRow.remove();
+        }
+
+        // Add fitlers.
         for (const urlFilter in initialFilters) {
             if (urlFilter !== 'courseid') {
-                // Add filter row.
+                // Add each filter row.
                 const filterdata = {
                     filtertype: urlFilter,
                     values:  initialFilters[urlFilter].values,
@@ -342,6 +334,8 @@ export const init = (filterRegionId, defaultcourseid, defaultcategoryid,
                 coreFilter.addFilterRow(filterdata);
             }
         }
+
+        // Apply filter.
+        applyFilter(initialFilters);
     }
-    applyFilter(initialFilters);
 };

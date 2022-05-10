@@ -15,24 +15,10 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_quiz/update_filter_condition_form
+    @template mod_quiz/random_question_container
 
-    From to add random questions.
+    Container for list of filtered questions.
 
-    Example context (json):
-    {}
 }}
-<div>
-    <!-- Question bank -->
-    <div id="questionbank_container">
-        {{{questionbank}}}
-    </div>
-
-
-    <!-- submit buttons -->
-    <form action="{{returnurl}}" method="POST" id="update_filter_condition_form" data-cmid="{{cmid}}" data-id="{{id}}">
-        <input type="hidden" name="message" value="" />
-        <input type="submit" class="btn btn-primary" name="update" value="{{#str}} updatefilterconditon, mod_quiz {{/str}}">
-        <input type="submit" class="btn btn-secondary" name="cancel" value="{{#str}} cancel {{/str}}">
-    </form>
+<div class="categoryquestionscontainer" id="questionscontainer">
 </div>

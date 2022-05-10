@@ -77,8 +77,9 @@ $data = new \stdClass();
 $data->questionbank = $renderer->question_bank_contents($questionbank, $params);
 $data->cmid = $cm->id;
 $data->id = $setreference->id;
+$data->returnurl = $returnurl;
 $updateform = $OUTPUT->render_from_template('mod_quiz/update_filter_condition_form', $data);
-$PAGE->requires->js_call_amd('mod_quiz/update_random_question_filter_condition', 'init', [$returnurl->out()]);
+$PAGE->requires->js_call_amd('mod_quiz/update_random_question_filter_condition', 'init');
 
 // Display a heading, question editing form.
 echo $OUTPUT->header();

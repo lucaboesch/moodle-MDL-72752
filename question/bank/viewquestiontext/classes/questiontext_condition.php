@@ -71,7 +71,7 @@ class questiontext_condition extends condition {
             'title' => get_string('showquestiontext', 'core_question'),
             'custom' => true,
             'multiple' => true,
-            'conditionclass' => '\\qbank_viewquestiontext\\questiontext_condition',
+            'conditionclass' => get_class($this),
             'filterclass' => 'core/local/filter/filtertypes/showtext',
             'values' => [],
             'allowempty' => true,

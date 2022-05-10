@@ -27,38 +27,38 @@ import Notification from 'core/notification';
 /**
  * Filter condition update form.
  *
- * @param {String} returnUrl return URL for redirection
  */
-export const init = (returnUrl) => {
+export const init = () => {
     const SELECTORS = {
-        FORM_CONTAINER: '#update_filter_condition_form-container',
+        QUESTION_BANK_CONTAINER: '#questionbank_container',
+        FORM_ELEMENT: '#update_filter_condition_form',
         UPDATE_BUTTON: '[name="update"]',
         CANCEL_BUTTON: '[name="cancel"]',
+        MESSAGE_INPUT: '[name="message"]',
         FILTER_CONDITION_ELEMENT: '[data-filtercondition]',
     };
 
-    const form = document.querySelector(SELECTORS.FORM_CONTAINER);
+    const questionBank = document.querySelector(SELECTORS.QUESTION_BANK_CONTAINER);
+    const form = document.querySelector(SELECTORS.FORM_ELEMENT);
     const updateButton = form.querySelector(SELECTORS.UPDATE_BUTTON);
-    const cancelButton = form.querySelector(SELECTORS.CANCEL_BUTTON);
 
-    updateButton.addEventListener("click", () => {
+    updateButton.addEventListener("click", (e) => {
+        e.preventDefault();
         const request = {
             methodname: 'mod_quiz_update_filter_condition',
             args: {
                 cmid: form.dataset?.cmid,
                 id: form.dataset?.id,
-                filtercondition: form.querySelector(SELECTORS.FILTER_CONDITION_ELEMENT).dataset?.filtercondition,
+                filtercondition: questionBank.querySelector(SELECTORS.FILTER_CONDITION_ELEMENT).dataset?.filtercondition,
             }
         };
        ajax.call([request])[0]
-           .then(() => {
-               window.location.href = returnUrl;
+           .then((response) => {
+               const messageInput = form.querySelector(SELECTORS.MESSAGE_INPUT);
+               messageInput.value = response.message;
+               form.submit();
             })
            .catch(Notification.exception);
-    });
-
-    cancelButton.addEventListener("click", () => {
-        window.location.href = returnUrl;
     });
 
 };

@@ -31,7 +31,7 @@ use core_plugin_manager;
 use qbank_columnsortorder\column_manager;
 use qbank_editquestion\editquestion_helper;
 use qbank_managecategories\helper;
-
+use qbank_managecategories\category_condition;
 /**
  * This class prints a view of the question bank.
  *
@@ -200,6 +200,20 @@ class view {
         $this->course = $course;
         $this->cm = $cm;
         $this->extraparams = $extraparams;
+
+        // Default filter condition.
+        if (!isset($params['filters']) && class_exists(category_condition::class)) {
+            $category = category_condition::get_current_category($params['cat']);
+            $filters = [
+                'category' => [
+                    'jointype' => category_condition::JOINTYPE_DEFAULT,
+                    'rangetype' => null,
+                    'conditionclass' => category_condition::class,
+                    'values' => [$category->id],
+                ]
+            ];
+            $params['filters'] = $filters;
+        }
 
         // Create the url of the new question page to forward to.
         $this->returnurl = $pageurl->out_as_local_url(false);

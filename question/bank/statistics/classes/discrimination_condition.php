@@ -104,7 +104,7 @@ class discrimination_condition extends condition {
             'title' => 'Discrimination index',
             'custom' => true,
             'multiple' => true,
-            'conditionclass' => '\\qbank_statistics\\discrimination_condition',
+            'conditionclass' => get_class($this),
             'filterclass' => 'core/local/filter/filtertypes/discrimination',
             'values' => [],
             'allowempty' => true,

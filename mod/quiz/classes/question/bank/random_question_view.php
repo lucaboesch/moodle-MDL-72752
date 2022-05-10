@@ -14,20 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Defines the custom question bank view used on the Edit quiz page.
- *
- * @package   mod_quiz
- * @category  question
- * @copyright 1999 onwards Martin Dougiamas and others {@link http://moodle.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace mod_quiz\question\bank;
 
 /**
  * Subclass to customise the view of the question bank for the quiz editing screen.
  *
+ * @copyright  2022 Catalyst IT Australia Pty Ltd
  * @author     2022 Nathan Nguyen <nathannguyen@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -50,8 +42,7 @@ class random_question_view extends custom_view {
      * Prints the table of questions in a category with interactions
      */
     protected function display_question_list(): void {
-        echo \html_writer::start_tag('div',
-            ['class' => 'categoryquestionscontainer', 'id' => 'questionscontainer']);
-        echo \html_writer::end_tag('div');
+        global $OUTPUT;
+        echo $OUTPUT->render_from_template('mod_quiz/random_question_container', []);
     }
 }

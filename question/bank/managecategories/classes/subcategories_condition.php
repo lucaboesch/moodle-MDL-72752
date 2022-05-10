@@ -71,7 +71,7 @@ class subcategories_condition extends condition {
             'title' => get_string('includesubcategories', 'core_question'),
             'custom' => true,
             'multiple' => true,
-            'conditionclass' => '\\qbank_managecategories\\subcategories_condition',
+            'conditionclass' => get_class($this),
             'filterclass' => 'core/local/filter/filtertypes/subcategories',
             'values' => [],
             'allowempty' => true,

@@ -23,6 +23,7 @@
     {}
 }}
 <div class="mt-2 position-relative" data-region="add_random_question_form-container">
+    <form action="{{returnurl}}" method="POST" id="add_random_question_form">
         <header id="id_existingcategoryheader" value="{{#str}} randomfromexistingcategory, mod_quiz {{/str}}">
             <!-- Question bank -->
             {{{questionbank}}}
@@ -36,6 +37,7 @@
 
             <!-- Buttons -->
             <div class="modal-footer mt-1" data-region="footer">
+                <input type="hidden" name="message" value="" />
                 <input type="submit" class="btn btn-primary" name="addrandom" value="{{#str}} addrandomquestion, mod_quiz {{/str}}" disabled>
                 <input type="submit" class="btn btn-secondary" name="cancel" value="{{#str}} cancel {{/str}}">
             </div>
@@ -65,4 +67,5 @@
                 <input type="submit" class="btn btn-secondary" name="cancel" value="{{#str}} cancel {{/str}}">
             </div>
         </header>
+    </form>
 </div>

@@ -26,7 +26,7 @@
 namespace mod_quiz\question\bank;
 
 use core_question\local\bank\question_version_status;
-
+use mod_quiz\question\bank\filter\custom_category_condition;
 /**
  * Subclass to customise the view of the question bank for the quiz editing screen.
  *
@@ -53,6 +53,20 @@ class custom_view extends \core_question\local\bank\view {
      * @param \stdClass $quiz quiz settings.
      */
     public function __construct($contexts, $pageurl, $course, $cm, $params, $extraparams) {
+        // Default filter condition.
+        if (!isset($params['filters']) && class_exists(custom_category_condition::class)) {
+            $category = custom_category_condition::get_current_category($params['cat']);
+            $filters = [
+                'category' => [
+                    'jointype' => custom_category_condition::JOINTYPE_DEFAULT,
+                    'rangetype' => null,
+                    'conditionclass' => custom_category_condition::class,
+                    'values' => [$category->id],
+                ]
+            ];
+            $params['filters'] = $filters;
+        }
+
         $this->init_required_columns();
         parent::__construct($contexts, $pageurl, $course, $cm, $params, $extraparams);
         list($quiz, ) = get_module_from_cmid($extraparams['cmid']);
@@ -205,6 +219,70 @@ class custom_view extends \core_question\local\bank\view {
      * for the modal.
      */
     protected function display_question_bank_header(): void {
+    }
+
+    protected function build_query(): void {
+        // Get the required tables and fields.
+        $joins = [];
+        $fields = ['qv.status', 'qc.id as categoryid', 'qv.version', 'qv.id as versionid', 'qbe.id as questionbankentryid'];
+        if (!empty($this->requiredcolumns)) {
+            foreach ($this->requiredcolumns as $column) {
+                $extrajoins = $column->get_extra_joins();
+                foreach ($extrajoins as $prefix => $join) {
+                    if (isset($joins[$prefix]) && $joins[$prefix] != $join) {
+                        throw new \coding_exception('Join ' . $join . ' conflicts with previous join ' . $joins[$prefix]);
+                    }
+                    $joins[$prefix] = $join;
+                }
+                $fields = array_merge($fields, $column->get_required_fields());
+            }
+        }
+        $fields = array_unique($fields);
+
+        // Build the order by clause.
+        $sorts = [];
+        foreach ($this->sort as $sort => $order) {
+            list($colname, $subsort) = $this->parse_subsort($sort);
+            $sorts[] = $this->requiredcolumns[$colname]->sort_expression($order < 0, $subsort);
+        }
+
+        // Build the where clause.
+        $latestversion = 'qv.version = (SELECT MAX(v.version)
+                                          FROM {question_versions} v
+                                          JOIN {question_bank_entries} be
+                                            ON be.id = v.questionbankentryid
+                                         WHERE be.id = qbe.id)';
+        $readyonly = "qv.status = '" . question_version_status::QUESTION_STATUS_READY . "' ";
+        $tests = ['q.parent = 0', $latestversion, $readyonly];
+        $this->sqlparams = [];
+        foreach ($this->searchconditions as $searchcondition) {
+            if ($searchcondition->where()) {
+                $tests[] = '((' . $searchcondition->where() .'))';
+            }
+            if ($searchcondition->params()) {
+                $this->sqlparams = array_merge($this->sqlparams, $searchcondition->params());
+            }
+        }
+        // Build the SQL.
+        $sql = ' FROM {question} q ' . implode(' ', $joins);
+        $sql .= ' WHERE ' . implode(' AND ', $tests);
+        $this->countsql = 'SELECT count(1)' . $sql;
+        $this->loadsql = 'SELECT ' . implode(', ', $fields) . $sql . ' ORDER BY ' . implode(', ', $sorts);
+    }
+
+    public function add_standard_searchcondition(): void {
+        foreach ($this->plugins as $componentname => $plugin) {
+            if (\core\plugininfo\qbank::is_plugin_enabled($componentname)) {
+                $pluginentrypointobject = new $plugin();
+                if ($componentname === 'qbank_managecategories') {
+                    $pluginentrypointobject = new quiz_managecategories_feature();
+                }
+                $pluginobjects = $pluginentrypointobject->get_question_filters($this);
+                foreach ($pluginobjects as $pluginobject) {
+                    $this->add_searchcondition($pluginobject, $pluginobject->get_condition_key());
+                }
+            }
+        }
     }
 
 }

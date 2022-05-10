@@ -261,7 +261,7 @@ class category_condition extends condition {
             'title' => get_string('category', 'core_question'),
             'custom' => false,
             'multiple' => false,
-            'conditionclass' => '\\qbank_managecategories\\category_condition',
+            'conditionclass' => get_class($this),
             'filterclass' => null,
             'values' => $values,
             'allowempty' => false,
