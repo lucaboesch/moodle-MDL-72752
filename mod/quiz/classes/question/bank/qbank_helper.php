@@ -243,8 +243,7 @@ class qbank_helper {
 
         // Random question.
         $randomloader = new random_question_loader($qubaids, []);
-        $newqusetionid = $randomloader->get_next_question_id($slotdata->category,
-                false, self::get_tag_ids_for_slot($slotdata));
+        $newqusetionid = $randomloader->get_next_filtered_question_id($slotdata);
 
         if ($newqusetionid === null) {
             throw new \moodle_exception('notenoughrandomquestions', 'quiz');

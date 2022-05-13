@@ -50,8 +50,8 @@ class category_condition extends condition {
     /** @var int The maximum displayed length of the category info. */
     public $maxinfolength;
 
-    /** @var array Filters assosciated with the apply filter request */
-    public $filters;
+    /** @var \stdClass Filter object */
+    public $filter;
 
     /**
      * Constructor to initialize the category filter condition.
@@ -65,8 +65,8 @@ class category_condition extends condition {
         }
         $this->contexts = $qbank->contexts->having_one_edit_tab_cap($qbank->get_pagevars('tabname'));
         $this->course = $qbank->course;
-        $this->filters = $qbank->get_pagevars('filters');
-
+        $filters = $qbank->get_pagevars('filters');
+        $this->filter = (object) $filters['category'];
         $this->init();
     }
 
@@ -74,19 +74,11 @@ class category_condition extends condition {
      * Initialize the object so it will be ready to return where() and params()
      */
     private function init() {
-        global $DB;
         if (!$this->category = self::get_current_category($this->cat)) {
             return;
         }
-        if ($this->recurse) {
-            $categoryids = question_categorylist($this->category->id);
-        } else {
-            $categoryids = [$this->category->id];
-        }
-        $filterverb = $this->filters['category']['jointype'] ?? self::JOINTYPE_DEFAULT;
-        $equal = !($filterverb === self::JOINTYPE_NONE);
-        list($catidtest, $this->params) = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED, 'cat', $equal);
-        $this->where = 'qbe.questioncategoryid ' . $catidtest;
+
+        list(, $this->where, $this->params) = self::build_query_from_filter($this->filter);
     }
 
     /**
@@ -267,5 +259,20 @@ class category_condition extends condition {
             'allowempty' => false,
         ];
         return $filteroptions;
+    }
+
+    /**
+     * Build query from filter value
+     *
+     * @param \stdClass $filter
+     * @return [] where sql and params
+     */
+    public static function build_query_from_filter(\stdClass $filter): array {
+        global $DB;
+        $filterverb = $filter->jointype ?? self::JOINTYPE_DEFAULT;
+        $equal = !($filterverb === self::JOINTYPE_NONE);
+        list($insql, $params) = $DB->get_in_or_equal($filter->values, SQL_PARAMS_NAMED, 'cat', $equal);
+        $where = 'qbe.questioncategoryid ' . $insql;
+        return [self::joins(), $where, $params];
     }
 }

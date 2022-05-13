@@ -77,6 +77,35 @@ class random_question_loader {
     }
 
     /**
+     * Pick a random question based on filter conditions
+     *
+     * @param \stdClass $questiondata question data
+     * @return int|null
+     */
+    public function get_next_filtered_question_id(\stdClass $questiondata): ?int  {
+        $fitlercondition = $questiondata->filtercondition;
+        $filters = (array) $fitlercondition->filters ?? [];
+        if (empty($filters)) {
+            throw new moodle_exception('filterisempty', 'question');
+        }
+
+        $this->ensure_filtered_questions_loaded($filters);
+
+        $key = $this->get_fitlered_questions_key($filters);
+        if (empty($this->availablequestionscache[$key])) {
+            return null;
+        }
+
+        reset($this->availablequestionscache[$key]);
+        $lowestcount = key($this->availablequestionscache[$key]);
+        reset($this->availablequestionscache[$key][$lowestcount]);
+        $questionid = key($this->availablequestionscache[$key][$lowestcount]);
+        $this->use_question($questionid);
+        return $questionid;
+    }
+
+
+    /**
      * Pick a question at random from the given category, from among those with the fewest uses.
      * If an array of tag ids are specified, then only the questions that are tagged with ALL those tags will be selected.
      *
@@ -89,8 +118,13 @@ class random_question_loader {
      * @param array $tagids An array of tag ids. A question has to be tagged with all the provided tagids (if any)
      *      in order to be eligible for being picked.
      * @return int|null the id of the question picked, or null if there aren't any.
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     public function get_next_question_id($categoryid, $includesubcategories, $tagids = []): ?int {
+        debugging('Function get_next_question_id() is deprecated,
+         please use get_next_filtered_question_id() instead.', DEBUG_DEVELOPER);
+
         $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
 
         $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
@@ -107,6 +141,17 @@ class random_question_loader {
     }
 
     /**
+     * Key for filtered questions.
+     * This function replace get_category_key
+     *
+     * @param array $filters filter array
+     * @return String
+     */
+    protected function get_fitlered_questions_key(array $filters): String {
+        return json_encode($filters);
+    }
+
+    /**
      * Get the key into {@see $availablequestionscache} for this combination of options.
      *
      * @param int $categoryid the id of a category in the question bank.
@@ -114,8 +159,13 @@ class random_question_loader {
      *      that category, or that category and subcategories.
      * @param array $tagids an array of tag ids.
      * @return string the cache key.
+     *
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     protected function get_category_key($categoryid, $includesubcategories, $tagids = []): string {
+        debugging('Function get_category_key() is deprecated,
+         please get_fitlered_questions_key instead.', DEBUG_DEVELOPER);
         if ($includesubcategories) {
             $key = $categoryid . '|1';
         } else {
@@ -129,6 +179,56 @@ class random_question_loader {
         return $key;
     }
 
+
+    /**
+     * Populate {@see $availablequestionscache} according to filter conditions.
+     *
+     * @param array $filters filter array
+     * @return void
+     */
+    protected function ensure_filtered_questions_loaded(array $filters) {
+        global $DB;
+
+        $key = $this->get_fitlered_questions_key($filters);
+
+        if (isset($this->availablequestionscache[$key])) {
+            // Data is already in the cache, nothing to do.
+            return;
+        }
+
+        list($extraconditions, $extraparams) = $DB->get_in_or_equal($this->excludedqtypes,
+            SQL_PARAMS_NAMED, 'excludedqtype', false);
+
+        // Load the available questions from the question bank.
+        $questionidsandcounts = \question_bank::get_finder()->get_filtered_questions_with_usage_counts(
+            $filters, $this->qubaids, 'q.qtype ' . $extraconditions, $extraparams);
+        if (!$questionidsandcounts) {
+            // No questions in this category.
+            $this->availablequestionscache[$key] = [];
+            return;
+        }
+
+        // Put all the questions with each value of $prevusecount in separate arrays.
+        $idsbyusecount = [];
+        foreach ($questionidsandcounts as $questionid => $prevusecount) {
+            if (isset($this->recentlyusedquestions[$questionid])) {
+                // Recently used questions are never returned.
+                continue;
+            }
+            $idsbyusecount[$prevusecount][] = $questionid;
+        }
+
+        // Now put that data into our cache. For each count, we need to shuffle
+        // questionids, and make those the keys of an array.
+        $this->availablequestionscache[$key] = [];
+        foreach ($idsbyusecount as $prevusecount => $questionids) {
+            shuffle($questionids);
+            $this->availablequestionscache[$key][$prevusecount] = array_combine(
+                $questionids, array_fill(0, count($questionids), 1));
+        }
+        ksort($this->availablequestionscache[$key]);
+    }
+
     /**
      * Populate {@see $availablequestionscache} for this combination of options.
      *
@@ -137,8 +237,13 @@ class random_question_loader {
      *      that category, or that category and subcategories.
      * @param array $tagids An array of tag ids. If an array is provided, then
      *      only the questions that are tagged with ALL the provided tagids will be loaded.
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     protected function ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids = []): void {
+        debugging('Function ensure_questions_for_category_loaded() is deprecated,
+         please use the function ensure_filtered_questions_loaded.', DEBUG_DEVELOPER);
+
         global $DB;
 
         $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
@@ -214,6 +319,25 @@ class random_question_loader {
     }
 
     /**
+     * Get filtered questions.
+     *
+     * @param array $filters filter array
+     * @return array list of filtered questions
+     */
+    protected function get_filtered_question_ids(array $filters): array  {
+        $this->ensure_filtered_questions_loaded($filters);
+        $key = $this->get_fitlered_questions_key($filters);
+        $cachedvalues = $this->availablequestionscache[$key];
+        $questionids = [];
+
+        foreach ($cachedvalues as $usecount => $ids) {
+            $questionids = array_merge($questionids, array_keys($ids));
+        }
+
+        return $questionids;
+    }
+
+    /**
      * Get the list of available question ids for the given criteria.
      *
      * @param int $categoryid The id of a category in the question bank.
@@ -222,8 +346,13 @@ class random_question_loader {
      * @param array $tagids An array of tag ids. If an array is provided, then
      *      only the questions that are tagged with ALL the provided tagids will be loaded.
      * @return int[] The list of question ids
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     protected function get_question_ids($categoryid, $includesubcategories, $tagids = []): array {
+        debugging('Function get_question_ids() is deprecated,
+         please use get_filtered_question_ids() instead.', DEBUG_DEVELOPER);
+
         $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
         $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
         $cachedvalues = $this->availablequestionscache[$categorykey];
@@ -312,6 +441,18 @@ class random_question_loader {
     }
 
     /**
+     *
+     * Count number of filtered questions
+     *
+     * @param array $filters filter array
+     * @return int number of question
+     */
+    public function count_filtered_questions(array $filters): int {
+        $questionids = $this->get_filtered_question_ids($filters);
+        return count($questionids);
+    }
+
+    /**
      * Count the number of available questions for the given criteria.
      *
      * @param int $categoryid The id of a category in the question bank.
@@ -320,8 +461,12 @@ class random_question_loader {
      * @param array $tagids An array of tag ids. If an array is provided, then
      *      only the questions that are tagged with ALL the provided tagids will be loaded.
      * @return int The number of questions matching the criteria.
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     public function count_questions($categoryid, $includesubcategories, $tagids = []): int {
+        debugging('Function count_questions() is deprecated,
+         please use count_filtered_questions() instead.', DEBUG_DEVELOPER);
         $questionids = $this->get_question_ids($categoryid, $includesubcategories, $tagids);
         return count($questionids);
     }
