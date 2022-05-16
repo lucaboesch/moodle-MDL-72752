@@ -551,11 +551,7 @@ class question_finder implements cache_data_source {
         // Build filter conditions.
         foreach ($filters as $filter) {
             if (isset($filter->conditionclass)) {
-                list($filterjoins, $filterwhere, $filterparams) = $filter->conditionclass::build_query_from_filter($filter);
-                if (!empty($filterjoins)) {
-                    // Duplicate join key is overwritten.
-                    $joins = array_merge($joins, $filterjoins);
-                }
+                list($filterwhere, $filterparams) = $filter->conditionclass::build_query_from_filters($filters);
                 if (!empty($filterwhere)) {
                     $where[] = '(' . $filterwhere . ')';
                 }

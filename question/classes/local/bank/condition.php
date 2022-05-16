@@ -76,14 +76,6 @@ abstract class condition {
     }
 
     /**
-     * Return joins to be bound to the above joins clause fragment.
-     * @return array parameter name => value.
-     */
-    public static function joins() {
-        return [];
-    }
-
-    /**
      * Display GUI for selecting criteria for this condition. Displayed when Show More is open.
      *
      * Compare display_options(), which displays always, whether Show More is open or not.
@@ -134,13 +126,10 @@ abstract class condition {
     /**
      * Build query from filter value
      *
-     * @param \stdClass $filter
-     * @return [] join, where sql and params
+     * @param array $filters filter objects
+     * @return array where sql and params
      */
-    public static function build_query_from_filter(\stdClass $filter): array {
-        $joins = [];
-        $where = '';
-        $params = [];
-        return [$joins, $where, $params];
+    public static function build_query_from_filters(array $filters): array {
+        return ['', []];
     }
 }

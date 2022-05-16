@@ -35,9 +35,6 @@ class category_condition extends condition {
     /** @var array of contexts. */
     protected $contexts;
 
-    /** @var bool Whether to include questions from sub-categories. */
-    protected $recurse;
-
     /** @var string SQL fragment to add to the where clause. */
     protected $where;
 
@@ -50,35 +47,21 @@ class category_condition extends condition {
     /** @var int The maximum displayed length of the category info. */
     public $maxinfolength;
 
-    /** @var \stdClass Filter object */
-    public $filter;
-
     /**
      * Constructor to initialize the category filter condition.
      */
     public function __construct($qbank) {
         $this->cat = $qbank->get_pagevars('cat');
-        if (isset($qbank->get_pagevars('filters')['subcategories']['values'][0])) {
-            $this->recurse = (int)$qbank->get_pagevars('filters')['subcategories']['values'][0] === 0;
-        } else {
-            $this->recurse = false;
-        }
         $this->contexts = $qbank->contexts->having_one_edit_tab_cap($qbank->get_pagevars('tabname'));
         $this->course = $qbank->course;
         $filters = $qbank->get_pagevars('filters');
-        $this->filter = (object) $filters['category'];
-        $this->init();
-    }
 
-    /**
-     * Initialize the object so it will be ready to return where() and params()
-     */
-    private function init() {
         if (!$this->category = self::get_current_category($this->cat)) {
             return;
         }
 
-        list(, $this->where, $this->params) = self::build_query_from_filter($this->filter);
+        // Build where and params.
+        list($this->where, $this->params) = self::build_query_from_filters($filters);
     }
 
     /**
@@ -264,15 +247,39 @@ class category_condition extends condition {
     /**
      * Build query from filter value
      *
-     * @param \stdClass $filter
-     * @return [] where sql and params
+     * @param array $filters filter objects
+     * @return array where sql and params
      */
-    public static function build_query_from_filter(\stdClass $filter): array {
+    public static function build_query_from_filters(array $filters): array {
         global $DB;
+
+        // Category filter
+        if (isset($filters['category'])) {
+            $filter = (object) $filters['category'];
+        } else {
+            return ['', []];
+        }
+
+        $recursive = false;
+        if (isset($filters['subcategories'])) {
+            $subcatfilter = (object) $filters['subcategories'];
+            $recursive = (int) $subcatfilter->values[0];
+        }
+
+        // Sub categories.
+        if ($recursive) {
+            $categories = $filter->values;
+            $categoriesandsubcategories = [];
+            foreach ($categories as $categoryid) {
+                $categoriesandsubcategories += question_categorylist($categoryid);
+            }
+            $filter->values = $categoriesandsubcategories;
+        }
+
         $filterverb = $filter->jointype ?? self::JOINTYPE_DEFAULT;
         $equal = !($filterverb === self::JOINTYPE_NONE);
         list($insql, $params) = $DB->get_in_or_equal($filter->values, SQL_PARAMS_NAMED, 'cat', $equal);
         $where = 'qbe.questioncategoryid ' . $insql;
-        return [self::joins(), $where, $params];
+        return [$where, $params];
     }
 }

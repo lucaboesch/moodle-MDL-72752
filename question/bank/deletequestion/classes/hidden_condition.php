@@ -39,16 +39,14 @@ class hidden_condition extends condition {
      * Constructor to initialize the hidden condition for qbank.
      */
     public function __construct($qbank) {
-        $this->where = "qv.status <> '" . question_version_status::QUESTION_STATUS_HIDDEN . "'";
         $filters = $qbank->get_pagevars('filters');
-        if (isset($filters['hidden']['values'][0])) {
-            $this->hide = (int)$filters['hidden']['values'][0];
-            if ($this->hide === 0) {
-                $this->where = "qv.status = '" . question_version_status::QUESTION_STATUS_READY .
-                    "' OR qv.status = '" . question_version_status::QUESTION_STATUS_HIDDEN .
-                    "' OR qv.status = '" . question_version_status::QUESTION_STATUS_DRAFT . "'";
+        if (isset($filters['hidden'])) {
+            $filter = (object) $filters['hidden'];
+            if (isset($filter->values[0])) {
+                $this->hide = (int) $this->filter->values[0];
             }
         }
+        self::build_query_from_filters($filters);
     }
 
     public function get_condition_key() {
@@ -80,5 +78,26 @@ class hidden_condition extends condition {
             'values' => [],
             'allowempty' => true,
         ];
+    }
+
+    /**
+     * Build query from filter value
+     *
+     * @param array $filters filter objects
+     * @return array where sql and params
+     */
+    public static function build_query_from_filters(array $filters): array {
+        if (isset($filters['hidden'])) {
+            $filter = (object) $filters['hidden'];
+            $where = "qv.status <> '" . question_version_status::QUESTION_STATUS_HIDDEN . "'";
+            $hide = (int) $filter->values[0];
+            if ($hide === 0) {
+                $where = "qv.status = '" . question_version_status::QUESTION_STATUS_READY .
+                    "' OR qv.status = '" . question_version_status::QUESTION_STATUS_HIDDEN .
+                    "' OR qv.status = '" . question_version_status::QUESTION_STATUS_DRAFT . "'";
+            }
+            return [$where, []];
+        }
+        return ['', []];
     }
 }

@@ -162,8 +162,6 @@ export const init = (filterRegionId, defaultcourseid, defaultcategoryid,
      * @return {*}
      */
     const renderQuestiondata = (filtercondition) => {
-        // eslint-disable-next-line no-console
-        console.log(filtercondition);
         const viewData = {
             component: component,
             callback: callback,
@@ -329,7 +327,7 @@ export const init = (filterRegionId, defaultcourseid, defaultcategoryid,
                     filtertype: urlFilter,
                     values:  initialFilters[urlFilter].values,
                     jointype: initialFilters[urlFilter].jointype,
-                    rangetype: initialFilters[urlFilter].rangetypes,
+                    rangetype: initialFilters[urlFilter].rangetypes
                 };
                 coreFilter.addFilterRow(filterdata);
             }

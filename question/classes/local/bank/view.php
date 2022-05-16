@@ -689,7 +689,6 @@ class view {
         $sql .= $whereclause . implode(' AND ', $tests);
         $this->countsql = 'SELECT count(1)' . $sql;
         $this->loadsql = 'SELECT ' . implode(', ', $fields) . $sql . ' ORDER BY ' . implode(', ', $sorts);
-        var_dump($this>$this->loadsql);
     }
 
     /**
