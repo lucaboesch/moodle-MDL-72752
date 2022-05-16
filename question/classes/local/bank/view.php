@@ -202,7 +202,7 @@ class view {
         $this->extraparams = $extraparams;
 
         // Default filter condition.
-        if (!isset($params['filters']) && class_exists(category_condition::class)) {
+        if (!isset($params['filters']) && isset($params['cat']) && class_exists(category_condition::class)) {
             $category = category_condition::get_current_category($params['cat']);
             $filters = [
                 'category' => [

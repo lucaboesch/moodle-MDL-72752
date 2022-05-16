@@ -223,7 +223,9 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
             }
 
             // Normal case, pick one at random.
-              $questionid = $randomloader->get_next_filtered_question_id($questiondata);
+            $fitlercondition = $questiondata->filtercondition;
+            $filters = (array) $fitlercondition->filters ?? [];
+            $questionid = $randomloader->get_next_filtered_question_id($filters);
 
             if ($questionid === null) {
                 throw new moodle_exception('notenoughrandomquestions', 'quiz',

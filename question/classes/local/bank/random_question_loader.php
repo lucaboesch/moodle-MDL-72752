@@ -79,12 +79,10 @@ class random_question_loader {
     /**
      * Pick a random question based on filter conditions
      *
-     * @param \stdClass $questiondata question data
+     * @param array $filters filter array
      * @return int|null
      */
-    public function get_next_filtered_question_id(\stdClass $questiondata): ?int  {
-        $fitlercondition = $questiondata->filtercondition;
-        $filters = (array) $fitlercondition->filters ?? [];
+    public function get_next_filtered_question_id(array $filters): ?int  {
         if (empty($filters)) {
             throw new moodle_exception('filterisempty', 'question');
         }
@@ -148,7 +146,7 @@ class random_question_loader {
      * @return String
      */
     protected function get_fitlered_questions_key(array $filters): String {
-        return json_encode($filters);
+        return sha1(json_encode($filters));
     }
 
     /**
@@ -190,7 +188,6 @@ class random_question_loader {
         global $DB;
 
         $key = $this->get_fitlered_questions_key($filters);
-
         if (isset($this->availablequestionscache[$key])) {
             // Data is already in the cache, nothing to do.
             return;
@@ -327,6 +324,7 @@ class random_question_loader {
     protected function get_filtered_question_ids(array $filters): array  {
         $this->ensure_filtered_questions_loaded($filters);
         $key = $this->get_fitlered_questions_key($filters);
+
         $cachedvalues = $this->availablequestionscache[$key];
         $questionids = [];
 
@@ -370,14 +368,41 @@ class random_question_loader {
      * If an optional list of tag ids are provided, then the question must be tagged with
      * ALL of the provided tags to be considered as available.
      *
+     * @param array $filters filter array
+     * @param int $questionid the question that is being used.
+     * @return bool whether the question is available in the requested category.
+     */
+    public function is_filtered_question_available(array $filters, int $questionid): bool {
+        $this->ensure_filtered_questions_loaded($filters);
+        $categorykey = $this->get_fitlered_questions_key($filters);
+
+        foreach ($this->availablequestionscache[$categorykey] as $questionids) {
+            if (isset($questionids[$questionid])) {
+                $this->use_question($questionid);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check whether a given question is available in a given category. If so, mark it used.
+     * If an optional list of tag ids are provided, then the question must be tagged with
+     * ALL of the provided tags to be considered as available.
+     *
      * @param int $categoryid the id of a category in the question bank.
      * @param bool $includesubcategories wether to pick a question from exactly
      *      that category, or that category and subcategories.
      * @param int $questionid the question that is being used.
      * @param array $tagids An array of tag ids. Only the questions that are tagged with all the provided tagids can be available.
      * @return bool whether the question is available in the requested category.
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     public function is_question_available($categoryid, $includesubcategories, $questionid, $tagids = []): bool {
+        debugging('Function is_question_available() is deprecated,
+         please use is_filtered_question_available() instead.', DEBUG_DEVELOPER);
         $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
         $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
 
@@ -389,6 +414,51 @@ class random_question_loader {
         }
 
         return false;
+    }
+    /**
+     * Get the list of available questions for the given criteria.
+     *
+     * @param array $filters filter array
+     * @param int $limit Maximum number of results to return.
+     * @param int $offset Number of items to skip from the begging of the result set.
+     * @param string[] $fields The fields to return for each question.
+     * @return \stdClass[] The list of question records
+     */
+    public function get_filtered_questions($filters, $limit = 100, $offset = 0, $fields = []) {
+        global $DB;
+
+        $questionids = $this->get_filtered_question_ids($filters);
+
+        if (empty($questionids)) {
+            return [];
+        }
+
+        if (empty($fields)) {
+            // Return all fields.
+            $fieldsstring = '*';
+        } else {
+            $fieldsstring = implode(',', $fields);
+        }
+
+        // Create the query to get the questions (validate that at least we have a question id. If not, do not execute the sql).
+        $hasquestions = false;
+        if (!empty($questionids)) {
+            $hasquestions = true;
+        }
+        if ($hasquestions) {
+            list($condition, $param) = $DB->get_in_or_equal($questionids, SQL_PARAMS_NAMED, 'questionid');
+            $condition = 'WHERE q.id ' . $condition;
+            $sql = "SELECT {$fieldsstring}
+                      FROM (SELECT q.*, qbe.questioncategoryid as category
+                      FROM {question} q
+                      JOIN {question_versions} qv ON qv.questionid = q.id
+                      JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
+                      {$condition}) q";
+
+            return $DB->get_records_sql($sql, $param, $offset, $limit);
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -403,8 +473,12 @@ class random_question_loader {
      * @param int $offset Number of items to skip from the begging of the result set.
      * @param string[] $fields The fields to return for each question.
      * @return \stdClass[] The list of question records
+     * @deprecated since Moodle 4.1
+     * @todo Final deprecation on Moodle 4.5
      */
     public function get_questions($categoryid, $includesubcategories, $tagids = [], $limit = 100, $offset = 0, $fields = []) {
+        debugging('Function get_questions() is deprecated,
+         please use get_filtered_questions() instead.', DEBUG_DEVELOPER);
         global $DB;
 
         $questionids = $this->get_question_ids($categoryid, $includesubcategories, $tagids);

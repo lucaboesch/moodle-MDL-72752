@@ -523,7 +523,7 @@ class question_finder implements cache_data_source {
      * @return array questionid => count of number of previous uses.
      */
     public function get_filtered_questions_with_usage_counts(array $filters, qubaid_condition $qubaids,
-                                                             string $extraconditions, array $extraparams): array {
+                                                             string $extraconditions = '', array $extraparams = []): array {
         global $DB;
 
         $select = "q.id, (SELECT COUNT(1)
@@ -570,11 +570,12 @@ class question_finder implements cache_data_source {
         // Build query.
         $from = $from . implode(' ', $joins);
         $where = implode(' AND ', $where);
-        return $DB->get_records_sql_menu("SELECT $select
-                                                FROM $from
-                                               WHERE $where
-                                            ORDER BY previous_attempts",
-            $params);
+        $sql = "SELECT $select
+                  FROM $from
+                 WHERE $where
+              ORDER BY previous_attempts";
+
+        return $DB->get_records_sql_menu($sql, $params);
     }
 
     /**

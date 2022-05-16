@@ -273,12 +273,13 @@ class category_condition extends condition {
             foreach ($categories as $categoryid) {
                 $categoriesandsubcategories += question_categorylist($categoryid);
             }
-            $filter->values = $categoriesandsubcategories;
+        } else {
+            $categoriesandsubcategories = $filter->values;
         }
 
         $filterverb = $filter->jointype ?? self::JOINTYPE_DEFAULT;
         $equal = !($filterverb === self::JOINTYPE_NONE);
-        list($insql, $params) = $DB->get_in_or_equal($filter->values, SQL_PARAMS_NAMED, 'cat', $equal);
+        list($insql, $params) = $DB->get_in_or_equal($categoriesandsubcategories, SQL_PARAMS_NAMED, 'cat', $equal);
         $where = 'qbe.questioncategoryid ' . $insql;
         return [$where, $params];
     }
