@@ -83,10 +83,6 @@ class random_question_loader {
      * @return int|null
      */
     public function get_next_filtered_question_id(array $filters): ?int  {
-        if (empty($filters)) {
-            throw new moodle_exception('filterisempty', 'question');
-        }
-
         $this->ensure_filtered_questions_loaded($filters);
 
         $key = $this->get_fitlered_questions_key($filters);

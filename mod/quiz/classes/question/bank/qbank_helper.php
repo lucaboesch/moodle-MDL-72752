@@ -172,6 +172,41 @@ class qbank_helper {
                 // Unpack the information about a random question.
                 $slot->questionid = 's' . $slot->id; // Sometimes this is used as an array key, so needs to be unique.
                 $slot->filtercondition = json_decode($slot->filtercondition);
+
+                // Transform old filtercondition into new ones.
+                if (!isset($slot->filtercondition->filters)) {
+                    $slot->filtercondition->filters = new \stdClass();
+
+                    // Question category filter.
+                    if (isset($slot->filtercondition->questioncategoryid)) {
+                        $slot->filtercondition->filters->category = (object) [
+                            'jointype' => \qbank_managecategories\category_condition::JOINTYPE_DEFAULT,
+                            'values' => [$slot->filtercondition->questioncategoryid],
+                            'conditionclass' => \qbank_managecategories\category_condition::class
+                        ];
+                    }
+
+                    // Subcategories filter.
+                    if (isset($slot->filtercondition->includingsubcategories)) {
+                        $slot->filtercondition->filters->subcategories = (object) [
+                            'jointype' => \qbank_managecategories\subcategories_condition::JOINTYPE_DEFAULT,
+                            'values' => [$slot->filtercondition->includingsubcategories],
+                            'conditionclass' => \qbank_managecategories\subcategories_condition::class
+                        ];
+                    }
+
+                    // Tag filters.
+                    if (isset($slot->filtercondition->tags)) {
+                        $slot->filtercondition->filters->qtagid = (object) [
+                            'jointype' => \qbank_tagquestion\tag_condition::JOINTYPE_DEFAULT,
+                            'values' => $slot->filtercondition->tags,
+                            'conditionclass' => \qbank_tagquestion\tag_condition::class
+                        ];
+                    }
+                }
+
+                $slot->category = $slot->filtercondition->filters->category->values[0] ?? 0;
+
                 $slot->qtype = 'random';
                 $slot->name = get_string('random', 'quiz');
                 $slot->length = 1;
