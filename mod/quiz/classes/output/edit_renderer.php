@@ -669,7 +669,7 @@ class edit_renderer extends \plugin_renderer_base {
         if ($structure->can_add_random_questions()) {
             $returnurl = new \moodle_url('/mod/quiz/edit.php', array('cmid' => $structure->get_cmid(), 'data-addonpage' => $page));
             $params = ['returnurl' => $returnurl, 'cmid' => $structure->get_cmid(), 'appendqnumstring' => 'addarandomquestion'];
-            $url = new \moodle_url('/mod/quiz/addrandom.php', $params);
+            $url = new \moodle_url('/mod/quiz/edit.php', $params);
             $icon = new \pix_icon('t/add', $str->addarandomquestion, 'moodle', array('class' => 'iconsmall', 'title' => ''));
             $attributes = array('class' => 'cm-edit-action addarandomquestion', 'data-action' => 'addarandomquestion');
             if ($page) {
