@@ -2382,7 +2382,7 @@ function mod_quiz_output_fragment_quiz_question_bank($args): string {
     $querystring = parse_url($args['querystring'], PHP_URL_QUERY);
     parse_str($querystring, $params);
 
-    $viewclass = 'mod_quiz\\question\\bank\\custom_view';
+    $viewclass = \mod_quiz\question\bank\custom_view::class;
     $extraparams['view'] = $viewclass;
 
     // Build required parameters.
@@ -2390,7 +2390,7 @@ function mod_quiz_output_fragment_quiz_question_bank($args): string {
         build_required_parameters_for_custom_view($params, $extraparams);
 
     // Custom View.
-    $questionbank = new mod_quiz\question\bank\custom_view($contexts, $thispageurl, $course, $cm, $pagevars, $extraparams);
+    $questionbank = new $viewclass($contexts, $thispageurl, $course, $cm, $pagevars, $extraparams);
 
     // Output.
     $renderer = $PAGE->get_renderer('mod_quiz', 'edit');
@@ -2421,8 +2421,8 @@ function mod_quiz_output_fragment_add_random_question_form($args) {
     list($contexts, $thispageurl, $course, $cm, $pagevars, $extraparams) =
         build_required_parameters_for_custom_view($params, $extraparams);
 
-    // Additional param to differentiate with question bank view
-    $viewclass = 'mod_quiz\\question\\bank\\random_question_view';
+    // Additional param to differentiate with other question bank view
+    $viewclass = \mod_quiz\question\bank\random_question_view::class;
     $extraparams['view'] = $viewclass;
 
     // Custom View.
@@ -2432,7 +2432,7 @@ function mod_quiz_output_fragment_add_random_question_form($args) {
     $questionbankoutput = $renderer->question_bank_contents($questionbank, $pagevars);
 
     $randomcount[] = ['value'=> 0, 'name' => get_string('randomnumber', 'quiz')];
-    // TODO question count.
+
     $maxrand = 100;
     for ($i = 1; $i <= min(100, $maxrand); $i++) {
         $randomcount[] = ['value'=> $i, 'name' => $i];
