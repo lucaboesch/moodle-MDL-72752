@@ -24,35 +24,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-
+global $CFG;
+require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
 /**
  * Tests for the {@see core_question\local\bank\random_question_loader} class.
  *
  * @copyright  2015 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class random_question_loader_testcase extends advanced_testcase {
-
-    private function create_filters($categoryids, $recursive = 0, $qtagids = []) {
-        $filters = [
-            'category' => (object) [
-                'jointype' => \qbank_managecategories\category_condition::JOINTYPE_DEFAULT,
-                'values' => $categoryids,
-                'conditionclass' => \qbank_managecategories\category_condition::class
-            ],
-            'subcategories' => (object) [
-                'jointype' => \qbank_managecategories\subcategories_condition::JOINTYPE_DEFAULT,
-                'values' => [$recursive],
-                'conditionclass' => \qbank_managecategories\subcategories_condition::class
-            ],
-            'qtagids' => (object) [
-                'jointype' => \qbank_tagquestion\tag_condition::JOINTYPE_DEFAULT,
-                'values' => $qtagids,
-                'conditionclass' => \qbank_tagquestion\tag_condition::class
-            ]
-        ];
-        return $filters;
-    }
+class random_question_loader_testcase extends \random_question_filter_test_base {
 
     public function test_empty_category_gives_null() {
         $this->resetAfterTest();
@@ -123,7 +103,7 @@ class random_question_loader_testcase extends advanced_testcase {
         $cat = $generator->create_question_category();
         $course = $this->getDataGenerator()->create_course();
         $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course]);
-        quiz_add_random_questions($quiz, 1, $cat->id, 1, false);
+        quiz_add_random_questions($quiz, 1, $cat->id, 1);
         $loader = new \core_question\local\bank\random_question_loader(new qubaid_list([]));
 
         $filters = $this->create_filters([$cat->id]);

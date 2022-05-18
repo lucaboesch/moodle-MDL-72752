@@ -27,6 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 
 use mod_quiz\question\bank\qbank_helper;
 
+global $CFG;
+require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
 /**
  * Class mod_quiz_local_structure_slot_random_test
  * Class for tests related to the {@link \mod_quiz\local\structure\slot_random} class.
@@ -34,28 +36,7 @@ use mod_quiz\question\bank\qbank_helper;
  * @copyright  2018 Shamim Rezaie <shamim@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_quiz_local_structure_slot_random_test extends advanced_testcase {
-    private function create_filters($categoryids, $recursive = 0, $qtagids = []) {
-        $filters = [
-            'category' => (object) [
-                'jointype' => \qbank_managecategories\category_condition::JOINTYPE_DEFAULT,
-                'values' => $categoryids,
-                'conditionclass' => \qbank_managecategories\category_condition::class
-            ],
-            'subcategories' => (object) [
-                'jointype' => \qbank_managecategories\subcategories_condition::JOINTYPE_DEFAULT,
-                'values' => [$recursive],
-                'conditionclass' => \qbank_managecategories\subcategories_condition::class
-            ],
-            'qtagids' => (object) [
-                'jointype' => \qbank_tagquestion\tag_condition::JOINTYPE_DEFAULT,
-                'values' => $qtagids,
-                'conditionclass' => \qbank_tagquestion\tag_condition::class
-            ]
-        ];
-        return $filters;
-    }
-
+class mod_quiz_local_structure_slot_random_test extends \random_question_filter_test_base {
     /**
      * Constructor test.
      */
@@ -127,7 +108,7 @@ class mod_quiz_local_structure_slot_random_test extends advanced_testcase {
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
 
-        quiz_add_random_questions($quiz, 0, $category->id, 1, false);
+        quiz_add_random_questions($quiz, 0, $category->id, 1);
 
         // Set the filter conditions.
         $filtercondition = new stdClass();
@@ -163,7 +144,7 @@ class mod_quiz_local_structure_slot_random_test extends advanced_testcase {
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
 
-        quiz_add_random_questions($quiz, 0, $category->id, 1, false);
+        quiz_add_random_questions($quiz, 0, $category->id, 1);
 
         // Set the filter conditions.
         $filtercondition = new stdClass();
@@ -203,7 +184,7 @@ class mod_quiz_local_structure_slot_random_test extends advanced_testcase {
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
 
-        quiz_add_random_questions($quiz, 0, $category->id, 1, false);
+        quiz_add_random_questions($quiz, 0, $category->id, 1);
 
         // Slot data.
         $randomslotdata = new stdClass();

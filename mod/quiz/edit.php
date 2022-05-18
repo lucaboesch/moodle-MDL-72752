@@ -130,20 +130,6 @@ if ($addsectionatpage = optional_param('addsectionatpage', false, PARAM_INT)) {
     redirect($afteractionurl);
 }
 
-if ((optional_param('addrandom', false, PARAM_BOOL)) && confirm_sesskey()) {
-    // Add random questions to the quiz.
-    $structure->check_can_be_edited();
-    $recurse = optional_param('recurse', 0, PARAM_BOOL);
-    $addonpage = optional_param('addonpage', 0, PARAM_INT);
-    $categoryid = required_param('categoryid', PARAM_INT);
-    $randomcount = required_param('randomcount', PARAM_INT);
-    quiz_add_random_questions($quiz, $addonpage, $categoryid, $randomcount, $recurse);
-
-    quiz_delete_previews($quiz);
-    quiz_update_sumgrades($quiz);
-    redirect($afteractionurl);
-}
-
 if (optional_param('savechanges', false, PARAM_BOOL) && confirm_sesskey()) {
 
     // If rescaling is required save the new maximum.
