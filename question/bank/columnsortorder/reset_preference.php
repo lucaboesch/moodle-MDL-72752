@@ -15,17 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for qbank_columnsortorder.
+ * Question bank settings page class.
  *
  * @package    qbank_columnsortorder
- * @copyright  2021 Catalyst IT Australia Pty Ltd
- * @author     Ghaly Marc-Alexandre <marc-alexandreghaly@catalyst-ca.net>
+ * @copyright  2022 Catalyst IT Australia Pty Ltd
+ * @author     Nathan Nguyen <nathannguyen@catalyst-ca.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__ . '/../../../config.php');
 
-$plugin->component = 'qbank_columnsortorder';
-$plugin->version   = 2022041901;
-$plugin->requires  = 2022041200;
-$plugin->maturity  = MATURITY_STABLE;
+$returnurl = required_param('returnurl', PARAM_LOCALURL);
+$preference = required_param('preference', PARAM_TEXT);
+
+require_sesskey();
+require_login();
+
+// Reset user preference.
+unset_user_preference("${preference}_enabledcol");
+unset_user_preference("${preference}_pinnedcols");
+unset_user_preference("${preference}_hiddencols");
+unset_user_preference("${preference}_colsize");
+
+redirect($returnurl);
